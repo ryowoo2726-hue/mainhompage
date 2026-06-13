@@ -28,6 +28,7 @@ body {
   min-height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
 }
 
 body {
@@ -48,6 +49,8 @@ body {
   min-height: var(--app-height, 100svh);
   touch-action: none;
   overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 body.locked {
@@ -408,7 +411,7 @@ h1 {
     rotateY(var(--tilt-y))
     rotateZ(var(--spin));
   transform-style: preserve-3d;
-  transition: transform 90ms linear;
+  transition: none;
   will-change: transform;
 }
 
@@ -535,7 +538,7 @@ h1 {
   gap: 0.32rem;
   transform: rotateZ(var(--counter-spin));
   transform-style: preserve-3d;
-  transition: transform 90ms linear;
+  transition: none;
 }
 
 .service-node:hover,

@@ -12,6 +12,7 @@ const lineRoot = document.querySelector("#network-lines");
 const portalCount = document.querySelector("#portal-count");
 const root = document.documentElement;
 const hub = document.querySelector(".orbital-hub");
+const hubStage = document.querySelector(".hub-stage");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const accessGate = document.querySelector("#access-gate");
 const accessForm = document.querySelector("#access-form");
@@ -85,7 +86,7 @@ function normalizeAngleDelta(delta) {
 function turnDialTo(clientX, clientY) {
   const nextAngle = getDialAngle(clientX, clientY);
   const delta = normalizeAngleDelta(nextAngle - lastDialAngle);
-  spin += delta;
+  spin += delta * 1.35;
   spinVelocity = 0;
   totalDialMovement += Math.abs(delta);
   pointerMoved = totalDialMovement > 5;
@@ -363,13 +364,27 @@ window.visualViewport?.addEventListener("resize", () => {
   resizeCanvas();
 });
 
-document.addEventListener(
-  "touchmove",
-  (event) => {
-    if (event.cancelable) event.preventDefault();
-  },
-  { passive: false },
-);
+function stopSafariPageDrag(event) {
+  if (event.cancelable) event.preventDefault();
+}
+
+document.addEventListener("touchmove", stopSafariPageDrag, {
+  capture: true,
+  passive: false,
+});
+
+window.addEventListener("touchmove", stopSafariPageDrag, {
+  capture: true,
+  passive: false,
+});
+
+window.addEventListener("gesturestart", stopSafariPageDrag, {
+  passive: false,
+});
+
+window.addEventListener("gesturechange", stopSafariPageDrag, {
+  passive: false,
+});
 
 window.addEventListener(
   "wheel",
@@ -380,19 +395,19 @@ window.addEventListener(
   { passive: false },
 );
 
-hub.addEventListener("pointerdown", (event) => {
+hubStage.addEventListener("pointerdown", (event) => {
   if (event.pointerType !== "pen") return;
   beginDial(event.clientX, event.clientY);
-  hub.setPointerCapture(event.pointerId);
+  hubStage.setPointerCapture(event.pointerId);
 });
 
-hub.addEventListener("pointerup", (event) => {
+hubStage.addEventListener("pointerup", (event) => {
   if (!isPointerDragging) return;
   endDial();
-  hub.releasePointerCapture(event.pointerId);
+  hubStage.releasePointerCapture(event.pointerId);
 });
 
-hub.addEventListener("pointercancel", () => {
+hubStage.addEventListener("pointercancel", () => {
   endDial();
 });
 
@@ -405,7 +420,7 @@ window.addEventListener(
   { passive: true },
 );
 
-hub.addEventListener(
+hubStage.addEventListener(
   "touchstart",
   (event) => {
     if (event.cancelable) event.preventDefault();
@@ -416,7 +431,7 @@ hub.addEventListener(
   { passive: false },
 );
 
-hub.addEventListener(
+hubStage.addEventListener(
   "touchmove",
   (event) => {
     if (event.cancelable) event.preventDefault();
@@ -430,7 +445,7 @@ hub.addEventListener(
   { passive: false },
 );
 
-hub.addEventListener(
+hubStage.addEventListener(
   "touchend",
   (event) => {
     const touchEnded = Array.from(event.changedTouches).some(
@@ -441,7 +456,7 @@ hub.addEventListener(
   { passive: true },
 );
 
-hub.addEventListener(
+hubStage.addEventListener(
   "touchcancel",
   () => {
     endDial();
