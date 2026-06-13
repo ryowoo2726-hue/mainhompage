@@ -18,31 +18,35 @@ const accessForm = document.querySelector("#access-form");
 const accessInput = document.querySelector("#access-code");
 const accessError = document.querySelector("#access-error");
 const launchFlash = document.querySelector("#launch-flash");
+const navPortalLinks = document.querySelectorAll("[data-portal-nav]");
 const ACCESS_CODE = "2726";
 let spin = 0;
 let spinVelocity = 0;
-let tiltX = -8;
-let tiltY = 10;
-let targetTiltX = tiltX;
-let targetTiltY = tiltY;
-let touchStartX = 0;
-let touchStartY = 0;
-let parallaxX = 0;
-let parallaxY = 0;
-let targetParallaxX = 0;
-let targetParallaxY = 0;
+let isPointerDragging = false;
+let pointerMoved = false;
+let lastDialAngle = 0;
+let totalDialMovement = 0;
 
 function setAppHeight() {
-  root.style.setProperty("--app-height", `${window.innerHeight}px`);
-  document.body.dataset.orientation =
-    window.innerWidth > window.innerHeight ? "landscape" : "portrait";
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const isLandscape = viewportWidth > viewportHeight;
+  let hubSize = isLandscape
+    ? Math.min(viewportWidth * 0.46, viewportHeight * 0.66, 560)
+    : Math.min(viewportWidth * 0.9, viewportHeight * 0.5, 600);
+
+  if (viewportHeight < 620) {
+    hubSize = Math.min(hubSize, viewportHeight * 0.58, viewportWidth * 0.44);
+  }
+
+  root.style.setProperty("--app-height", `${viewportHeight}px`);
+  root.style.setProperty("--hub-size", `${Math.max(220, Math.round(hubSize))}px`);
+  document.body.dataset.orientation = isLandscape ? "landscape" : "portrait";
 }
 
 function updateHubTransform() {
   root.style.setProperty("--spin", `${spin.toFixed(2)}deg`);
   root.style.setProperty("--counter-spin", `${(-spin).toFixed(2)}deg`);
-  root.style.setProperty("--tilt-x", `${tiltX.toFixed(2)}deg`);
-  root.style.setProperty("--tilt-y", `${tiltY.toFixed(2)}deg`);
 }
 
 function animateHub() {
@@ -52,17 +56,39 @@ function animateHub() {
   }
 
   spin += spinVelocity;
-  spinVelocity *= 0.92;
+  spinVelocity *= 0.88;
   if (Math.abs(spinVelocity) < 0.001) spinVelocity = 0;
-  tiltX += (targetTiltX - tiltX) * 0.08;
-  tiltY += (targetTiltY - tiltY) * 0.08;
   updateHubTransform();
   requestAnimationFrame(animateHub);
 }
 
 function rotateHub(delta) {
   spinVelocity += delta;
-  spinVelocity = Math.max(-4.5, Math.min(4.5, spinVelocity));
+  spinVelocity = Math.max(-8, Math.min(8, spinVelocity));
+  updateHubTransform();
+}
+
+function getDialAngle(clientX, clientY) {
+  const rect = hub.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  return (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI;
+}
+
+function normalizeAngleDelta(delta) {
+  if (delta > 180) return delta - 360;
+  if (delta < -180) return delta + 360;
+  return delta;
+}
+
+function turnDialTo(clientX, clientY) {
+  const nextAngle = getDialAngle(clientX, clientY);
+  const delta = normalizeAngleDelta(nextAngle - lastDialAngle);
+  spin += delta;
+  spinVelocity = 0;
+  totalDialMovement += Math.abs(delta);
+  pointerMoved = totalDialMovement > 5;
+  lastDialAngle = nextAngle;
   updateHubTransform();
 }
 
@@ -100,6 +126,26 @@ accessForm.addEventListener("submit", (event) => {
   accessInput.focus();
 });
 
+function launchPortal(portal, sourceElement) {
+  const isPlaceholder = portal.url === "#";
+  sourceElement.classList.remove("is-launching");
+  void sourceElement.offsetWidth;
+  sourceElement.classList.add("is-launching");
+
+  const rect = sourceElement.getBoundingClientRect();
+  launchFlash.style.setProperty("--launch-x", `${rect.left + rect.width / 2}px`);
+  launchFlash.style.setProperty("--launch-y", `${rect.top + rect.height / 2}px`);
+  launchFlash.classList.remove("is-active");
+  void launchFlash.offsetWidth;
+  launchFlash.classList.add("is-active");
+
+  if (!isPlaceholder) {
+    window.setTimeout(() => {
+      window.location.href = portal.url;
+    }, prefersReducedMotion ? 0 : 360);
+  }
+}
+
 portals.forEach((portal, index) => {
   const node = document.createElement("a");
   node.className = "service-node";
@@ -117,26 +163,22 @@ portals.forEach((portal, index) => {
     </span>
   `;
   node.addEventListener("click", (event) => {
-    const isPlaceholder = portal.url === "#";
     event.preventDefault();
-    node.classList.remove("is-launching");
-    void node.offsetWidth;
-    node.classList.add("is-launching");
-
-    const rect = node.getBoundingClientRect();
-    launchFlash.style.setProperty("--launch-x", `${rect.left + rect.width / 2}px`);
-    launchFlash.style.setProperty("--launch-y", `${rect.top + rect.height / 2}px`);
-    launchFlash.classList.remove("is-active");
-    void launchFlash.offsetWidth;
-    launchFlash.classList.add("is-active");
-
-    if (!isPlaceholder) {
-      window.setTimeout(() => {
-        window.location.href = portal.url;
-      }, prefersReducedMotion ? 0 : 430);
-    }
+    if (pointerMoved) return;
+    launchPortal(portal, node);
   });
   nodeRoot.appendChild(node);
+});
+
+navPortalLinks.forEach((link) => {
+  const portal = portals[Number(link.dataset.portalNav)];
+  if (!portal) return;
+
+  link.href = portal.url;
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    launchPortal(portal, link);
+  });
 });
 
 portalCount.textContent = portals.length;
@@ -208,17 +250,14 @@ function resizeCanvas() {
 }
 
 function drawStars() {
-  parallaxX += (targetParallaxX - parallaxX) * 0.04;
-  parallaxY += (targetParallaxY - parallaxY) * 0.04;
-
   for (const star of stars) {
     if (!prefersReducedMotion) {
       star.y += star.drift;
       if (star.y > height + 8) star.y = -8;
     }
 
-    const x = star.x + parallaxX * star.z;
-    const y = star.y + parallaxY * star.z;
+    const x = star.x;
+    const y = star.y;
     ctx.fillStyle = `rgba(236, 247, 255, ${star.alpha})`;
     ctx.beginPath();
     ctx.arc(x, y, star.r, 0, Math.PI * 2);
@@ -304,61 +343,75 @@ window.addEventListener("resize", () => {
 window.addEventListener(
   "wheel",
   (event) => {
-    rotateHub(event.deltaY * 0.018);
+    event.preventDefault();
+    rotateHub(event.deltaY * 0.04);
   },
-  { passive: true },
+  { passive: false },
 );
+
+hub.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "mouse") return;
+  isPointerDragging = true;
+  pointerMoved = false;
+  totalDialMovement = 0;
+  lastDialAngle = getDialAngle(event.clientX, event.clientY);
+  hub.setPointerCapture(event.pointerId);
+});
+
+hub.addEventListener("pointerup", (event) => {
+  if (!isPointerDragging) return;
+  isPointerDragging = false;
+  hub.releasePointerCapture(event.pointerId);
+  window.setTimeout(() => {
+    pointerMoved = false;
+  }, 80);
+});
+
+hub.addEventListener("pointercancel", () => {
+  isPointerDragging = false;
+});
 
 window.addEventListener(
   "pointermove",
   (event) => {
-    if (!hub || window.matchMedia("(pointer: coarse)").matches) return;
-    const rect = hub.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-    targetTiltX = Math.max(-18, Math.min(18, -8 - y * 18));
-    targetTiltY = Math.max(-22, Math.min(22, 10 + x * 22));
-    targetParallaxX = (event.clientX / window.innerWidth - 0.5) * 34;
-    targetParallaxY = (event.clientY / window.innerHeight - 0.5) * 26;
+    if (!isPointerDragging || event.pointerType === "mouse") return;
+    turnDialTo(event.clientX, event.clientY);
   },
   { passive: true },
 );
 
-window.addEventListener(
-  "touchstart",
-  (event) => {
-    const touch = event.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-  },
-  { passive: true },
-);
+if (!("PointerEvent" in window)) {
+  window.addEventListener(
+    "touchstart",
+    (event) => {
+      const touch = event.touches[0];
+      isPointerDragging = true;
+      pointerMoved = false;
+      totalDialMovement = 0;
+      lastDialAngle = getDialAngle(touch.clientX, touch.clientY);
+    },
+    { passive: true },
+  );
 
-window.addEventListener(
-  "touchmove",
-  (event) => {
-    const touch = event.touches[0];
-    const dx = touch.clientX - touchStartX;
-    const dy = touch.clientY - touchStartY;
-    rotateHub(dx * 0.014 + dy * 0.007);
-    targetTiltX = Math.max(-18, Math.min(18, -8 - dy * 0.04));
-    targetTiltY = Math.max(-22, Math.min(22, 10 + dx * 0.05));
-    targetParallaxX = (touch.clientX / window.innerWidth - 0.5) * 30;
-    targetParallaxY = (touch.clientY / window.innerHeight - 0.5) * 24;
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-  },
-  { passive: true },
-);
+  window.addEventListener(
+    "touchmove",
+    (event) => {
+      event.preventDefault();
+      if (!isPointerDragging) return;
+      const touch = event.touches[0];
+      turnDialTo(touch.clientX, touch.clientY);
+    },
+    { passive: false },
+  );
 
-window.addEventListener(
-  "deviceorientation",
-  (event) => {
-    if (event.beta === null || event.gamma === null) return;
-    targetTiltX = Math.max(-16, Math.min(16, -8 + event.beta * 0.18));
-    targetTiltY = Math.max(-20, Math.min(20, 10 + event.gamma * 0.32));
-    targetParallaxX = Math.max(-28, Math.min(28, event.gamma * 1.2));
-    targetParallaxY = Math.max(-22, Math.min(22, event.beta * 0.4));
-  },
-  { passive: true },
-);
+  window.addEventListener(
+    "touchend",
+    () => {
+      isPointerDragging = false;
+      window.setTimeout(() => {
+        pointerMoved = false;
+      }, 80);
+    },
+    { passive: true },
+  );
+}
