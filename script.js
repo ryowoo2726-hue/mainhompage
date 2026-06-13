@@ -26,10 +26,11 @@ let isPointerDragging = false;
 let pointerMoved = false;
 let lastDialAngle = 0;
 let totalDialMovement = 0;
+let activeTouchId = null;
 
 function setAppHeight() {
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
+  const viewportWidth = Math.round(window.visualViewport?.width ?? window.innerWidth);
+  const viewportHeight = Math.round(window.visualViewport?.height ?? window.innerHeight);
   const isLandscape = viewportWidth > viewportHeight;
   let hubSize = isLandscape
     ? Math.min(viewportWidth * 0.46, viewportHeight * 0.66, 560)
@@ -90,6 +91,23 @@ function turnDialTo(clientX, clientY) {
   pointerMoved = totalDialMovement > 5;
   lastDialAngle = nextAngle;
   updateHubTransform();
+}
+
+function beginDial(clientX, clientY) {
+  isPointerDragging = true;
+  pointerMoved = false;
+  totalDialMovement = 0;
+  spinVelocity = 0;
+  lastDialAngle = getDialAngle(clientX, clientY);
+}
+
+function endDial() {
+  const shouldSuppressClick = pointerMoved;
+  isPointerDragging = false;
+  activeTouchId = null;
+  window.setTimeout(() => {
+    pointerMoved = false;
+  }, shouldSuppressClick ? 360 : 80);
 }
 
 setAppHeight();
@@ -340,6 +358,19 @@ window.addEventListener("resize", () => {
   resizeCanvas();
 });
 
+window.visualViewport?.addEventListener("resize", () => {
+  setAppHeight();
+  resizeCanvas();
+});
+
+document.addEventListener(
+  "touchmove",
+  (event) => {
+    if (event.cancelable) event.preventDefault();
+  },
+  { passive: false },
+);
+
 window.addEventListener(
   "wheel",
   (event) => {
@@ -350,68 +381,70 @@ window.addEventListener(
 );
 
 hub.addEventListener("pointerdown", (event) => {
-  if (event.pointerType === "mouse") return;
-  isPointerDragging = true;
-  pointerMoved = false;
-  totalDialMovement = 0;
-  lastDialAngle = getDialAngle(event.clientX, event.clientY);
+  if (event.pointerType !== "pen") return;
+  beginDial(event.clientX, event.clientY);
   hub.setPointerCapture(event.pointerId);
 });
 
 hub.addEventListener("pointerup", (event) => {
   if (!isPointerDragging) return;
-  isPointerDragging = false;
+  endDial();
   hub.releasePointerCapture(event.pointerId);
-  window.setTimeout(() => {
-    pointerMoved = false;
-  }, 80);
 });
 
 hub.addEventListener("pointercancel", () => {
-  isPointerDragging = false;
+  endDial();
 });
 
 window.addEventListener(
   "pointermove",
   (event) => {
-    if (!isPointerDragging || event.pointerType === "mouse") return;
+    if (!isPointerDragging || event.pointerType !== "pen") return;
     turnDialTo(event.clientX, event.clientY);
   },
   { passive: true },
 );
 
-if (!("PointerEvent" in window)) {
-  window.addEventListener(
-    "touchstart",
-    (event) => {
-      const touch = event.touches[0];
-      isPointerDragging = true;
-      pointerMoved = false;
-      totalDialMovement = 0;
-      lastDialAngle = getDialAngle(touch.clientX, touch.clientY);
-    },
-    { passive: true },
-  );
+hub.addEventListener(
+  "touchstart",
+  (event) => {
+    if (event.cancelable) event.preventDefault();
+    const touch = event.changedTouches[0];
+    activeTouchId = touch.identifier;
+    beginDial(touch.clientX, touch.clientY);
+  },
+  { passive: false },
+);
 
-  window.addEventListener(
-    "touchmove",
-    (event) => {
-      event.preventDefault();
-      if (!isPointerDragging) return;
-      const touch = event.touches[0];
-      turnDialTo(touch.clientX, touch.clientY);
-    },
-    { passive: false },
-  );
+hub.addEventListener(
+  "touchmove",
+  (event) => {
+    if (event.cancelable) event.preventDefault();
+    if (!isPointerDragging) return;
+    const touch = Array.from(event.changedTouches).find(
+      (candidate) => candidate.identifier === activeTouchId,
+    );
+    if (!touch) return;
+    turnDialTo(touch.clientX, touch.clientY);
+  },
+  { passive: false },
+);
 
-  window.addEventListener(
-    "touchend",
-    () => {
-      isPointerDragging = false;
-      window.setTimeout(() => {
-        pointerMoved = false;
-      }, 80);
-    },
-    { passive: true },
-  );
-}
+hub.addEventListener(
+  "touchend",
+  (event) => {
+    const touchEnded = Array.from(event.changedTouches).some(
+      (candidate) => candidate.identifier === activeTouchId,
+    );
+    if (touchEnded) endDial();
+  },
+  { passive: true },
+);
+
+hub.addEventListener(
+  "touchcancel",
+  () => {
+    endDial();
+  },
+  { passive: true },
+);
