@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2학년 2반 허브</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section class="access-gate" id="access-gate" aria-labelledby="access-title">
+      <div class="access-panel">
+        <span class="access-mark" aria-hidden="true"></span>
+        <p class="eyebrow">Private Class Hub</p>
+        <h2 id="access-title">2학년 2반 허브 입장</h2>
+        <form id="access-form" autocomplete="off">
+          <label for="access-code">4자리 입장 코드</label>
+          <div class="access-row">
+            <input
+              id="access-code"
+              name="access-code"
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]{4}"
+              maxlength="4"
+              placeholder="0000"
+              aria-describedby="access-error"
+              required
+            />
+            <button type="submit">입장</button>
+          </div>
+          <p class="access-error" id="access-error" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <canvas id="neural-bg" aria-hidden="true"></canvas>
+    <div class="launch-flash" id="launch-flash" aria-hidden="true"></div>
+
+    <main class="shell">
+      <header class="topbar" aria-label="주요 메뉴">
+        <a class="brand" href="#" aria-label="2학년 2반 허브 홈">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>2학년 2반</span>
+        </a>
+
+        <nav class="nav-links">
+          <a class="active" href="#">홈</a>
+          <a href="#">공지 관리</a>
+          <a href="#">출결 관리</a>
+          <a href="#">자료 관리</a>
+          <a href="#">관리자</a>
+        </nav>
+      </header>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <p class="eyebrow">Class Web Hub</p>
+        <h1 id="hero-title">2학년 2반 웹 허브</h1>
+        <p class="hero-copy">
+          직접 만든 관리 웹들을 별자리처럼 연결해 빠르게 이동합니다.
+        </p>
+
+        <div class="hub-stage">
+          <div class="orbital-hub" aria-label="학급 웹 연결 지도">
+            <div class="depth-glow" aria-hidden="true"></div>
+            <div class="glow-ring ring-one"></div>
+            <div class="glow-ring ring-two"></div>
+            <div class="glow-ring ring-three"></div>
+            <svg class="connection-lines" viewBox="0 0 620 620" aria-hidden="true">
+              <g id="network-lines"></g>
+            </svg>
+            <div class="center-node">
+              <span>2-2</span>
+              <small>Hub</small>
+            </div>
+            <div id="service-nodes"></div>
+          </div>
+        </div>
+
+        <div class="gesture-hint" aria-label="조작 안내">
+          <span>스크롤 또는 화면 기울임으로 허브 회전</span>
+        </div>
+      </section>
+
+      <footer class="statusbar" aria-label="허브 상태">
+        <div class="status-item">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <strong id="portal-count">0</strong>
+          <span>주요 관리 웹</span>
+        </div>
+        <div class="status-item middle">
+          <span class="clock" aria-hidden="true"></span>
+          <span>최근 업데이트 대기중</span>
+        </div>
+        <button class="status-user" type="button" aria-label="관리 상태 열기">
+          <span class="avatar" aria-hidden="true"></span>
+          <span>관리자 상태</span>
+          <span class="status-icon" aria-hidden="true">⌄</span>
+        </button>
+      </footer>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
