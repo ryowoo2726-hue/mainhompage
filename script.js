@@ -2,7 +2,7 @@ const portals = [
   // 새 웹을 추가하거나 주소를 바꿀 때는 이 목록만 수정하면 됩니다.
   { name: "티비 게시판", icon: "assets/icons/notice.svg", url: "https://class-2-dashboard.web.app/admin.html", x: 50, y: 14, color: "#eaf5ff" },
   { name: "출결 관리", icon: "assets/icons/attendance.svg", url: "https://student-attendence-sand.vercel.app/", x: 79, y: 39, color: "#7bdcff" },
-  { name: "자료 관리", icon: "assets/icons/library.svg", url: "#", x: 68, y: 76, color: "#ffe39a" },
+  { name: "자료 관리", icon: "assets/icons/library.svg", url: "https://drive.google.com/drive/folders/1Kv6vz_45Xgp2Oko9m0hgVZzodfevVK8Q?usp=sharing", x: 68, y: 76, color: "#ffe39a" },
   { name: "일정 관리", icon: "assets/icons/calendar.svg", url: "#", x: 32, y: 76, color: "#ff92d6" },
   { name: "학생 명단", icon: "assets/icons/students.svg", url: "#", x: 21, y: 39, color: "#9affc7" },
 ];
@@ -58,7 +58,7 @@ function animateHub() {
   }
 
   spin += spinVelocity;
-  spinVelocity *= 0.88;
+  spinVelocity *= 0.86;
   if (Math.abs(spinVelocity) < 0.001) spinVelocity = 0;
   updateHubTransform();
   requestAnimationFrame(animateHub);
@@ -66,7 +66,7 @@ function animateHub() {
 
 function rotateHub(delta) {
   spinVelocity += delta;
-  spinVelocity = Math.max(-8, Math.min(8, spinVelocity));
+  spinVelocity = Math.max(-4.8, Math.min(4.8, spinVelocity));
   updateHubTransform();
 }
 
@@ -86,7 +86,7 @@ function normalizeAngleDelta(delta) {
 function turnDialTo(clientX, clientY) {
   const nextAngle = getDialAngle(clientX, clientY);
   const delta = normalizeAngleDelta(nextAngle - lastDialAngle);
-  spin += delta * 1.35;
+  spin += delta * 0.9;
   spinVelocity = 0;
   totalDialMovement += Math.abs(delta);
   pointerMoved = totalDialMovement > 5;
@@ -146,7 +146,7 @@ accessForm.addEventListener("submit", (event) => {
 });
 
 function launchPortal(portal, sourceElement) {
-  const isPlaceholder = portal.url === "#";
+  const hasUrl = portal.url && portal.url !== "#";
   sourceElement.classList.remove("is-launching");
   void sourceElement.offsetWidth;
   sourceElement.classList.add("is-launching");
@@ -158,10 +158,11 @@ function launchPortal(portal, sourceElement) {
   void launchFlash.offsetWidth;
   launchFlash.classList.add("is-active");
 
-  if (!isPlaceholder) {
+  if (hasUrl) {
+    const destination = portal.url;
     window.setTimeout(() => {
-      window.location.href = portal.url;
-    }, prefersReducedMotion ? 0 : 360);
+      window.location.assign(destination);
+    }, prefersReducedMotion ? 0 : 140);
   }
 }
 
@@ -183,6 +184,7 @@ portals.forEach((portal, index) => {
   `;
   node.addEventListener("click", (event) => {
     event.preventDefault();
+    event.stopPropagation();
     if (pointerMoved) return;
     launchPortal(portal, node);
   });
@@ -196,6 +198,7 @@ navPortalLinks.forEach((link) => {
   link.href = portal.url;
   link.addEventListener("click", (event) => {
     event.preventDefault();
+    event.stopPropagation();
     launchPortal(portal, link);
   });
 });
@@ -390,13 +393,14 @@ window.addEventListener(
   "wheel",
   (event) => {
     event.preventDefault();
-    rotateHub(event.deltaY * 0.04);
+    rotateHub(event.deltaY * 0.025);
   },
   { passive: false },
 );
 
 hubStage.addEventListener("pointerdown", (event) => {
   if (event.pointerType !== "pen") return;
+  if (event.target.closest(".service-node")) return;
   beginDial(event.clientX, event.clientY);
   hubStage.setPointerCapture(event.pointerId);
 });
@@ -423,6 +427,7 @@ window.addEventListener(
 hubStage.addEventListener(
   "touchstart",
   (event) => {
+    if (event.target.closest(".service-node")) return;
     if (event.cancelable) event.preventDefault();
     const touch = event.changedTouches[0];
     activeTouchId = touch.identifier;

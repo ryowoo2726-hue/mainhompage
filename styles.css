@@ -447,7 +447,7 @@ h1 {
   box-shadow:
     0 0 28px rgba(72, 205, 255, 0.28),
     inset 0 0 34px rgba(104, 215, 255, 0.16);
-  animation: drift 16s linear infinite;
+  animation: drift 24s linear infinite;
   transform: translateZ(1.8rem);
 }
 
@@ -458,7 +458,7 @@ h1 {
     0 0 30px rgba(255, 225, 136, 0.25),
     inset 0 0 20px rgba(255, 225, 136, 0.12);
   transform: rotate(42deg) scaleX(0.84) translateZ(-1.5rem);
-  animation: driftReverse 19s linear infinite;
+  animation: driftReverse 30s linear infinite;
 }
 
 .ring-three {
@@ -601,7 +601,7 @@ h1 {
     0.52rem 1.85rem 0 -0.02rem color-mix(in srgb, var(--node-color), white 46%);
   opacity: 0.76;
   transform: translate(-50%, -50%);
-  animation: satelliteDrift 6s linear infinite;
+  animation: satelliteDrift 10s linear infinite;
   pointer-events: none;
 }
 
