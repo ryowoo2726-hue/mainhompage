@@ -1,10 +1,11 @@
 const portals = [
   // 새 웹을 추가하거나 주소를 바꿀 때는 이 목록만 수정하면 됩니다.
   { name: "티비 게시판", icon: "assets/icons/notice.svg", url: "https://class-2-dashboard.web.app/admin.html", x: 50, y: 14, color: "#eaf5ff" },
-  { name: "출결 관리", icon: "assets/icons/attendance.svg", url: "https://student-attendence-sand.vercel.app/", x: 79, y: 39, color: "#7bdcff" },
-  { name: "자료 관리", icon: "assets/icons/library.svg", url: "https://drive.google.com/drive/folders/1Kv6vz_45Xgp2Oko9m0hgVZzodfevVK8Q?usp=sharing", x: 68, y: 76, color: "#ffe39a" },
-  { name: "일정 관리", icon: "assets/icons/calendar.svg", url: "#", x: 32, y: 76, color: "#ff92d6" },
-  { name: "학생 명단", icon: "assets/icons/students.svg", url: "#", x: 21, y: 39, color: "#9affc7" },
+  { name: "출결 관리", icon: "assets/icons/attendance.svg", url: "https://student-attendence-sand.vercel.app/", x: 81, y: 32, color: "#7bdcff" },
+  { name: "자료 관리", icon: "assets/icons/library.svg", url: "https://drive.google.com/drive/folders/1Kv6vz_45Xgp2Oko9m0hgVZzodfevVK8Q?usp=sharing", x: 81, y: 68, color: "#ffe39a" },
+  { name: "일정 관리", icon: "assets/icons/calendar.svg", url: "#", x: 50, y: 86, color: "#ff92d6" },
+  { name: "학생 명단", icon: "assets/icons/students.svg", url: "#", x: 19, y: 68, color: "#9affc7" },
+  { name: "학생 상점 현황", icon: "assets/icons/library.svg", url: "https://ryowoo2726-hue.github.io/student_point/", x: 19, y: 32, color: "#c4a5ff" },
 ];
 
 const nodeRoot = document.querySelector("#service-nodes");
@@ -177,7 +178,8 @@ const links = [
   [1, 2],
   [2, 3],
   [3, 4],
-  [4, 0],
+  [4, 5],
+  [5, 0],
   [0, 2],
   [1, 3],
 ];
