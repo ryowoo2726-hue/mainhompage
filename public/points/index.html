@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마석중학교 2-2 상점 확인</title>
+  <meta name="description" content="마석중학교 2학년 2반 학생 상점 및 월별 기록 간편 조회">
+  <link rel="stylesheet" href="/points/style.css?v=20261108-period-role-points">
+</head>
+<body>
+
+  <!-- Minimal Top Header: School name & sync icon -->
+  <header class="top-nav">
+    <a class="nav-title home-link" href="/" aria-label="메인 홈페이지로">마석중 2-2</a>
+    <div class="nav-actions">
+      <button type="button" id="roleCriteriaBtn" class="icon-btn" title="1인 1역 상점 기준 보기">
+        <span>상점 기준</span>
+      </button>
+      <button type="button" id="rankingBtn" class="icon-btn" aria-haspopup="dialog" aria-controls="rankingModal">
+        <span>랭킹</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Centered Interactive Viewport -->
+  <main class="center-container">
+
+    <details id="studentPeriodOptions" class="student-period-options">
+      <summary class="small-box-btn">조회 기간 설정</summary>
+      <form id="studentPeriodForm" class="student-period-form">
+        <label for="studentStartDate">조회 시작일</label>
+        <div class="student-period-fields">
+          <input type="date" id="studentStartDate" required>
+          <button type="submit" class="small-box-btn">적용</button>
+        </div>
+        <p class="info-note">선택한 날짜부터 <span id="studentPeriodEnd">오늘</span>까지 조회합니다.</p>
+      </form>
+    </details>
+
+    <!-- 1. Initial State: Minimal Search Input Only -->
+    <section id="searchSection" class="view-panel">
+      <form id="searchForm" class="minimal-form" onsubmit="return false;">
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="studentInput"
+            class="clean-input"
+            placeholder="학번 입력 (예: 20201)"
+            autocomplete="off"
+            autofocus
+            inputmode="numeric"
+          >
+          <button type="submit" id="submitBtn" class="enter-btn" aria-label="조회">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </div>
+        <p class="input-tip">학번 5자리(예: 20201) 또는 출석번호(예: 1)를 입력하고 Enter를 누르세요</p>
+      </form>
+    </section>
+
+    <!-- 2. Result State: Student Name, Total Score & Monthly Records -->
+    <section id="resultSection" class="view-panel" style="display: none;" aria-live="polite">
+      <div class="compact-result-card">
+        <button type="button" id="searchAgainBtn" class="small-box-btn student-switch-btn">다른 학생 조회</button>
+        <!-- Close / Back Button -->
+        <button type="button" id="backBtn" class="card-close-btn" title="다른 학번 입력 (ESC)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Top Profile & Total Score Header -->
+        <div class="result-header-row">
+          <div class="result-student">
+            <span class="student-num" id="studentNum">20201 (1번)</span>
+            <span class="student-name" id="studentName">강예림</span>
+          </div>
+
+          <div class="result-score-box">
+            <span class="score-label">기간 상점</span>
+            <div class="score-value-row">
+              <span class="score-num" id="studentPoints">9</span>
+              <span class="score-unit">점</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1인 1역 & 기본 정보 뱃지 (있을 경우) -->
+        <div class="student-meta-pills" id="studentMetaPills">
+          <span class="meta-pill" id="rolePill">1인1역: 분리수거</span>
+        </div>
+        <p id="studentPeriod" class="info-note"></p>
+        <p id="studentRecordWarning" class="record-warning" role="status" hidden></p>
+
+        <!-- Divider -->
+        <div class="card-inner-divider"></div>
+
+        <!-- Point Records Section -->
+        <div class="monthly-section">
+          <div class="monthly-section-head">
+            <span class="section-badge">상점 기록</span>
+          </div>
+
+          <div class="monthly-list" id="monthlyList">
+            <!-- Dynamically populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Simple Feedback Toast -->
+  <div id="toast" class="toast" role="status"></div>
+
+  <div id="attendanceModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="attendanceTitle" hidden>
+    <div class="criteria-modal attendance-modal">
+      <button type="button" id="attendanceCloseBtn" class="modal-close-btn" aria-label="출석 달력 닫기">×</button>
+      <p id="attendanceStudent" class="modal-eyebrow"></p>
+      <h2 id="attendanceTitle">출석 달력</h2>
+      <label for="calendarMonthInput" class="sr-only">달력 조회 월</label>
+      <input type="month" id="calendarMonthInput" class="calendar-month-input" aria-label="달력 조회 월">
+      <p id="attendanceSummary" class="info-note"></p>
+      <div class="attendance-weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div id="attendanceGrid" class="attendance-grid" role="list" aria-label="날짜별 출결"></div>
+    </div>
+  </div>
+
+  <div id="rankingModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="rankingTitle" hidden>
+    <div class="criteria-modal ranking-modal">
+      <button type="button" id="rankingCloseBtn" class="modal-close-btn" aria-label="랭킹 닫기">×</button>
+      <p class="modal-eyebrow">우리 반 상점</p>
+      <h2 id="rankingTitle">랭킹</h2>
+      <form id="rankingDateForm" class="ranking-date-form">
+        <label for="rankingStartDate">조회 시작일</label>
+        <div class="ranking-date-controls">
+          <input type="date" id="rankingStartDate" required aria-describedby="rankingHelp">
+          <button type="submit" class="ranking-primary-btn">조회</button>
+        </div>
+        <p id="rankingHelp" class="info-note">선택한 날짜부터 오늘까지 받은 상점을 합산합니다. 동점은 공동 순위입니다.</p>
+      </form>
+      <div class="ranking-heading">
+        <span class="section-badge">학생별 상점</span>
+        <span id="rankingPeriod" class="ranking-period"></span>
+      </div>
+      <p id="rankingStatus" class="info-note" role="status" aria-live="polite"></p>
+      <div class="ranking-table-wrap" id="rankingResults" hidden>
+        <table class="ranking-table">
+          <caption class="sr-only">선택한 시작일부터 오늘까지의 학생별 상점 순위</caption>
+          <thead><tr><th scope="col">순위</th><th scope="col">학생</th><th scope="col">출석</th><th scope="col">1인 1역</th><th scope="col">총 상점</th></tr></thead>
+          <tbody id="rankingBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1인 1역 상점 기준 안내 -->
+  <div id="roleCriteriaModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="roleCriteriaTitle" hidden>
+    <div class="criteria-modal">
+      <button type="button" id="roleCriteriaCloseBtn" class="modal-close-btn" aria-label="상점 기준 안내 닫기">×</button>
+      <p class="modal-eyebrow">1인 1역</p>
+      <h2 id="roleCriteriaTitle">상점 기준</h2>
+      <ul class="criteria-list">
+        <li><strong>특별실 청소</strong>: 수행 1회당 1점</li>
+        <li><strong>테블릿 관리</strong>: 누적 5회마다 3점</li>
+        <li><strong>분리수거</strong>: 수행 1회당 3점</li>
+        <li><strong>핸드폰 담당</strong>: 누적 5회마다 3점</li>
+        <li><strong>출석부 담당</strong>: 누적 5회마다 1점</li>
+        <li><strong>칠판정리 (조은찬)</strong>: 누적 5일마다 3점</li>
+        <li><strong>학생 관리 (이동하)</strong>: 누적 5일마다 3점</li>
+        <li><strong>급식 알리미 (선정호)</strong>: 누적 5회마다 3점</li>
+      </ul>
+      <p class="modal-note">학생별 상점 내역에서 역할·수행 날짜·횟수·반영 점수를 확인할 수 있습니다.</p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/points/data.js?v=20261108-period-role-points"></script>
+  <script src="/points/admin-data.js?v=20261108-period-role-points"></script>
+  <script src="/points/point-settings.js?v=20261108-period-role-points"></script>
+  <script src="/points/app.js?v=20261108-period-role-points"></script>
+  <script src="/points/ranking.js?v=20261108-period-role-points"></script>
+</body>
+</html>

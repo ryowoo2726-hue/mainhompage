@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "classroom-2-2",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "keep_vars": true,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "classroom-2-2"
+    }
+  ],
+  "vars": {
+    "NOTION_DATABASE_ID": "36917b13-a52b-80a5-b33a-f9c9a66d77d7",
+    "NOTION_STUDENT_DATABASE_ID": "31117b13-a52b-8010-8699-f49e3da93b3e",
+    "APP_TIME_ZONE": "Asia/Seoul",
+    "SESSION_TTL_MINUTES": "30"
+  }
+}
